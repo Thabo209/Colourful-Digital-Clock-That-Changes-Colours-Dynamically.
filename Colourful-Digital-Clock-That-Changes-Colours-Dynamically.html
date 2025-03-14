@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorful Digital Clock</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #1a1a1a;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        .clock-container {
+            position: relative;
+        }
+        
+        .clock {
+            font-size: 5rem;
+            font-weight: bold;
+            padding: 2rem;
+            border-radius: 1rem;
+            background-color: rgba(0, 0, 0, 0.7);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            min-width: 400px;
+            transition: all 0.3s ease;
+            z-index: 2;
+            position: relative;
+        }
+        
+        .date {
+            font-size: 1.5rem;
+            margin-top: 1rem;
+            color: #ccc;
+        }
+        
+        .background-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: float 4s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+            }
+            50% {
+                transform: translateY(-20px) translateX(10px);
+            }
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: -70px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            z-index: 3;
+        }
+        
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .mode-12hr {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-container">
+        <div class="background-particles" id="particles"></div>
+        <div class="clock" id="clock">
+            <div id="time">00:00:00</div>
+            <div id="date" class="date">Monday, March 11, 2025</div>
+        </div>
+        <div class="controls">
+            <button id="mode12" class="mode-12hr">12-Hour</button>
+            <button id="mode24">24-Hour</button>
+            <button id="toggleSeconds">Hide Seconds</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Clock variables
+            let is24HourFormat = false;
+            let showSeconds = true;
+            const timeDisplay = document.getElementById('time');
+            const dateDisplay = document.getElementById('date');
+            const clockElement = document.getElementById('clock');
+            const mode12Button = document.getElementById('mode12');
+            const mode24Button = document.getElementById('mode24');
+            const toggleSecondsButton = document.getElementById('toggleSeconds');
+            
+            // Particle settings
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 30;
+            const colors = [
+                '#FF5252', '#FF4081', '#E040FB', '#7C4DFF', 
+                '#536DFE', '#448AFF', '#40C4FF', '#18FFFF', 
+                '#64FFDA', '#69F0AE', '#B2FF59', '#EEFF41', 
+                '#FFFF00', '#FFD740', '#FFAB40', '#FF6E40'
+            ];
+            
+            // Create particles
+            for (let i = 0; i < particleCount; i++) {
+                createParticle();
+            }
+            
+            // Start the clock
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Button event listeners
+            mode12Button.addEventListener('click', function() {
+                is24HourFormat = false;
+                mode12Button.classList.add('mode-12hr');
+                mode24Button.classList.remove('mode-12hr');
+                updateClock();
+            });
+            
+            mode24Button.addEventListener('click', function() {
+                is24HourFormat = true;
+                mode24Button.classList.add('mode-12hr');
+                mode12Button.classList.remove('mode-12hr');
+                updateClock();
+            });
+            
+            toggleSecondsButton.addEventListener('click', function() {
+                showSeconds = !showSeconds;
+                toggleSecondsButton.textContent = showSeconds ? 'Hide Seconds' : 'Show Seconds';
+                updateClock();
+            });
+            
+            // Function to update the clock
+            function updateClock() {
+                const now = new Date();
+                
+                // Update time
+                let hours = now.getHours();
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                
+                let ampm = '';
+                if (!is24HourFormat) {
+                    ampm = hours >= 12 ? ' PM' : ' AM';
+                    hours = hours % 12 || 12;
+                }
+                
+                hours = hours.toString().padStart(2, '0');
+                
+                timeDisplay.textContent = hours + ':' + minutes + (showSeconds ? ':' + seconds : '') + ampm;
+                
+                // Update date
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                dateDisplay.textContent = now.toLocaleDateString('en-US', options);
+                
+                // Change colors
+                const colorIndex = Math.floor(now.getSeconds() % colors.length);
+                clockElement.style.boxShadow = `0 0 30px ${colors[colorIndex]}`;
+                clockElement.style.borderColor = colors[colorIndex];
+                
+                // Update one random particle
+                if (Math.random() > 0.7) {
+                    updateRandomParticle();
+                }
+            }
+            
+            // Function to create a particle
+            function createParticle() {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Random properties
+                const size = Math.random() * 20 + 5;
+                const colorIndex = Math.floor(Math.random() * colors.length);
+                
+                // Position - make sure they surround the clock
+                const left = Math.random() * window.innerWidth;
+                const top = Math.random() * window.innerHeight;
+                
+                // Set styles
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.backgroundColor = colors[colorIndex];
+                particle.style.left = `${left}px`;
+                particle.style.top = `${top}px`;
+                particle.style.animationDelay = `${Math.random() * 4}s`;
+                
+                particlesContainer.appendChild(particle);
+            }
+            
+            // Function to update a random particle
+            function updateRandomParticle() {
+                const particles = document.querySelectorAll('.particle');
+                if (particles.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * particles.length);
+                    const particle = particles[randomIndex];
+                    const colorIndex = Math.floor(Math.random() * colors.length);
+                    particle.style.backgroundColor = colors[colorIndex];
+                    particle.style.boxShadow = `0 0 10px ${colors[colorIndex]}`;
+                }
+            }
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                // Clear particles
+                particlesContainer.innerHTML = '';
+                // Recreate particles
+                for (let i = 0; i < particleCount; i++) {
+                    createParticle();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
